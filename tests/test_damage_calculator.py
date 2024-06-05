@@ -1,5 +1,5 @@
 from calculations.damage_calculator import damage_calc
-from calculations.dataclasses_and_enums import OneTalents, SevenTalents
+from calculations.dataclasses_and_enums import OneTalents, SevenTalents, SixteenTalents
 
 
 def test_level_seven_woi_cb():
@@ -52,7 +52,15 @@ def test_level_seven_woi_cb():
         ],
     }
     # Actual results:
-    time_series, damage_series = damage_calc(7, 10, 0, OneTalents.WAYOFILLUSION, SevenTalents.CRUSHINGBLOWS)
+    time_series, damage_series = damage_calc(
+        level=7,
+        total_time=10,
+        num_clones=0,
+        num_clones_attacking=0,
+        one_talent=OneTalents.WAYOFILLUSION,
+        seven_talent=SevenTalents.CRUSHINGBLOWS,
+        sixteen_talent=SixteenTalents.NONE,
+    )
     actual = {"damage_series": damage_series, "time_series": time_series}
     assert actual == expected
 
@@ -103,7 +111,13 @@ def test_level_thirteen_woi_pp_one_clone():
         ],
     }
     time_series, damage_series = damage_calc(
-        13, 10, num_clones=1, one_talent=OneTalents.WAYOFILLUSION, seven_talent=SevenTalents.PHANTOMPAIN
+        level=13,
+        total_time=10,
+        num_clones=1,
+        num_clones_attacking=0,
+        one_talent=OneTalents.WAYOFILLUSION,
+        seven_talent=SevenTalents.PHANTOMPAIN,
+        sixteen_talent=SixteenTalents.NONE,
     )
     actual = {"damage_series": damage_series, "time_series": time_series}
     assert actual == expected

@@ -20,6 +20,15 @@ class OneTalents(StrEnum):
     NONE = "None"
 
 
+class SixteenTalents(StrEnum):
+    """Level 16 talent options."""
+
+    MERCILESS = "Merciless Strikes"
+    HARSHWINDS = "Harsh Winds"
+    PRESSTHEATTACK = "Press the Attack"
+    NONE = "None"
+
+
 @dataclass
 class SamuroCounters:
     """Mutable class to store counter information."""
