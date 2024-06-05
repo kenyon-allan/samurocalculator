@@ -52,6 +52,58 @@ def test_level_seven_woi_cb():
         ],
     }
     # Actual results:
-    time_series, damage_series = damage_calc(7, 10, OneTalents.WAYOFILLUSION, SevenTalents.CRUSHINGBLOWS)
+    time_series, damage_series = damage_calc(7, 10, 0, OneTalents.WAYOFILLUSION, SevenTalents.CRUSHINGBLOWS)
+    actual = {"damage_series": damage_series, "time_series": time_series}
+    assert actual == expected
+
+
+def test_level_thirteen_woi_pp_one_clone():
+    """Tests phantom pain."""
+
+    expected = {
+        "damage_series": [
+            388.1993708294704,
+            776.3987416589408,
+            986.2362394046005,
+            1196.07373715026,
+            1405.9112348959197,
+            1794.11060572539,
+            2003.9481034710498,
+            2213.7856012167094,
+            2423.623098962369,
+            2811.8224697918395,
+            3021.659967537499,
+            3231.497465283159,
+            3441.3349630288185,
+            3829.534333858289,
+            4039.3718316039485,
+            4249.209329349608,
+            4459.046827095268,
+            4847.246197924738,
+        ],
+        "time_series": [
+            0,
+            0.1875,
+            0.7863023952095809,
+            1.3851047904191618,
+            1.9839071856287427,
+            2.5827095808383236,
+            3.1815119760479043,
+            3.780314371257485,
+            4.379116766467066,
+            4.977919161676646,
+            5.576721556886227,
+            6.175523952095808,
+            6.774326347305388,
+            7.373128742514969,
+            7.97193113772455,
+            8.570733532934131,
+            9.169535928143713,
+            9.768338323353294,
+        ],
+    }
+    time_series, damage_series = damage_calc(
+        13, 10, num_clones=1, one_talent=OneTalents.WAYOFILLUSION, seven_talent=SevenTalents.PHANTOMPAIN
+    )
     actual = {"damage_series": damage_series, "time_series": time_series}
     assert actual == expected
