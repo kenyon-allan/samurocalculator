@@ -1,10 +1,10 @@
 from calculations.dataclasses_and_enums import Enemycounters, SamuroCounters, OneTalents, SevenTalents
 
 
-def raise_for_invalid_inputs(one_talent: OneTalents, seven_talent: SevenTalents, level: int, total_time: int) -> None:
+def raise_for_invalid_inputs(
+    one_talent: OneTalents, seven_talent: SevenTalents, level: int, total_time: int, num_clones: int
+) -> None:
     """Raises for invalid inputs."""
-    if seven_talent == SevenTalents.PHANTOMPAIN:
-        raise ValueError("cmon, really?")
     if total_time < 0:
         raise ValueError("total_time must be a non-negative number")
     if level < 0 or level > 30:
@@ -13,6 +13,8 @@ def raise_for_invalid_inputs(one_talent: OneTalents, seven_talent: SevenTalents,
         raise ValueError("Cannot have Way of Illusion or Way of the Blade active at level 0.")
     if seven_talent != SevenTalents.NONE and level < 7:
         raise ValueError("Cannot have a level 7 talent without being at least level 7.")
+    if num_clones < 0 or num_clones > 2:
+        raise ValueError("Invalid number of clones. Must be 0, 1, or 2")
 
 
 def apply_crit(
@@ -22,6 +24,7 @@ def apply_crit(
     enemy_counters: Enemycounters,
     one_talent: OneTalents,
     seven_talent: SevenTalents,
+    num_clones: int = 0,
     w_triggered: bool = False,
 ) -> float:
     """Applies a critical strike and returns the result."""
@@ -35,15 +38,20 @@ def apply_crit(
     # Burning Blade
     bb_damage = 0.5 * counters.aa_damage
 
-    if w_triggered:
-        counters.remaining_w_cd = base_w_cd
+    if not counters.clone:
+        if w_triggered:
+            counters.remaining_w_cd = base_w_cd
 
-    # Account for crushing blows' damage increase. CB applies to the auto attack that triggers it.
-    if seven_talent == SevenTalents.CRUSHINGBLOWS:
-        if counters.cb_counter < 3:
-            counters.cb_counter += 1
-            counters.aa_damage = precb_aa_damage * (1 + (cbModifier * counters.cb_counter))
-            counters.crit_damage = precb_aa_damage * (critModifier + (cbModifier * counters.cb_counter))
+        # Account for crushing blows' damage increase. CB applies to the auto attack that triggers it.
+        if seven_talent == SevenTalents.CRUSHINGBLOWS:
+            if counters.cb_counter < 3:
+                counters.cb_counter += 1
+                counters.aa_damage = precb_aa_damage * (1 + (cbModifier * counters.cb_counter))
+                counters.crit_damage = precb_aa_damage * (critModifier + (cbModifier * counters.cb_counter))
+
+        # Account for phantom pain.
+        if seven_talent == SevenTalents.PHANTOMPAIN:
+            counters.crit_damage = counters.aa_damage * (critModifier + (0.35 * num_clones))
 
     counters.crit_counter = 0
     summed_damage += counters.crit_damage + (counters.crit_damage * 0.05 * enemy_counters.wotb_stacks)
@@ -61,13 +69,14 @@ def apply_crit(
 def damage_calc(
     level: int,
     total_time: int,
+    num_clones: int = 0,
     one_talent: OneTalents = OneTalents.NONE,
     seven_talent: SevenTalents = SevenTalents.NONE,
 ) -> tuple[list[float], list[float]]:
     """Calculates a list of times and damage values for a given length of time"""
 
     # check for invalid inputs
-    raise_for_invalid_inputs(one_talent, seven_talent, level, total_time)
+    raise_for_invalid_inputs(one_talent, seven_talent, level, total_time, num_clones)
 
     # # Globals
     aa_damage = 102.0  # level 0
@@ -104,6 +113,9 @@ def damage_calc(
     # For CB to not calculate badly, we preserve the original damage number.
     precb_aa_damage = counters.aa_damage
 
+    # Set up our clones
+    clones = [counters.create_clone(level) for _ in range(num_clones)]
+
     # Main Loop
     while passed_time < total_time:
 
@@ -114,7 +126,7 @@ def damage_calc(
         # Apply our damage - either a crit or an AA
         if counters.crit_counter == crit_threshold:
             summed_damage = apply_crit(
-                summed_damage, precb_aa_damage, counters, enemy_counters, one_talent, seven_talent
+                summed_damage, precb_aa_damage, counters, enemy_counters, one_talent, seven_talent, num_clones
             )
         else:
             counters.crit_counter += 1
@@ -132,7 +144,7 @@ def damage_calc(
         # Apply W if we can and AA reset attack
         if counters.remaining_w_cd <= 0 and counters.crit_counter != crit_threshold:
             summed_damage = apply_crit(
-                summed_damage, precb_aa_damage, counters, enemy_counters, one_talent, seven_talent, True
+                summed_damage, precb_aa_damage, counters, enemy_counters, one_talent, seven_talent, num_clones, True
             )
             damages.append(summed_damage)
 
