@@ -74,9 +74,9 @@ def apply_crit(
         summed_damage += bb_damage
 
     if w_triggered:
-        print(summed_damage, "CRIT", "-W", counters.clone)
+        print(summed_damage, "CRIT", "-W", "clone" if counters.clone else "samuro")
     else:
-        print(summed_damage, "CRIT", counters.clone)
+        print(summed_damage, "CRIT", "clone" if counters.clone else "samuro")
     return summed_damage
 
 
@@ -90,7 +90,7 @@ def apply_attack(
 
     counters.crit_counter += 1
     summed_damage += counters.aa_damage + (counters.aa_damage * 0.05 * enemy_counters.wotb_stacks)
-    print(summed_damage, "AA", counters.clone)
+    print(summed_damage, "AA", "clone" if counters.clone else "samuro")
     return summed_damage
 
 

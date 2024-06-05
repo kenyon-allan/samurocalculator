@@ -121,3 +121,65 @@ def test_level_thirteen_woi_pp_one_clone():
     )
     actual = {"damage_series": damage_series, "time_series": time_series}
     assert actual == expected
+
+
+def test_level_thirteen_woi_cb_one_clone_attacking():
+    """Tests Crushing Blows with one clone attacking."""
+
+    expected = {
+        "damage_series": [
+            363.2137092636769,
+            747.4111683019197,
+            1017.5319741771256,
+            1287.6527800523313,
+            1557.7735859275372,
+            1962.9547947403462,
+            2368.136003553155,
+            2659.240559202927,
+            2950.345114852699,
+            3241.4496705024712,
+            3646.6308793152803,
+            4051.8120881280893,
+            4342.916643777861,
+            4634.021199427633,
+            4925.125755077405,
+            5330.306963890213,
+            5735.4881727030215,
+            6026.5927283527935,
+            6317.6972840025655,
+            6608.801839652338,
+        ],
+        "time_series": [
+            0,
+            0.1875,
+            0.7863023952095809,
+            1.3851047904191618,
+            1.9839071856287427,
+            2.5827095808383236,
+            2.7702095808383236,
+            3.3690119760479043,
+            3.967814371257485,
+            4.566616766467066,
+            5.165419161676646,
+            5.352919161676646,
+            5.951721556886227,
+            6.550523952095808,
+            7.149326347305388,
+            7.748128742514969,
+            7.935628742514969,
+            8.53443113772455,
+            9.133233532934131,
+            9.732035928143713,
+        ],
+    }
+    time_series, damage_series = damage_calc(
+        level=13,
+        total_time=10,
+        num_clones=1,
+        num_clones_attacking=1,
+        one_talent=OneTalents.WAYOFILLUSION,
+        seven_talent=SevenTalents.CRUSHINGBLOWS,
+        sixteen_talent=SixteenTalents.NONE,
+    )
+    actual = {"damage_series": damage_series, "time_series": time_series}
+    assert actual == expected
