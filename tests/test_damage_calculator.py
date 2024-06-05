@@ -183,3 +183,60 @@ def test_level_thirteen_woi_cb_one_clone_attacking():
     )
     actual = {"damage_series": damage_series, "time_series": time_series}
     assert actual == expected
+
+
+def test_level_seven_wotb_bb_0_clones():
+    """Tests that bb doesn't benefit from wotb."""
+    expected = {
+        "damage_series": [
+            268.4500829641114,
+            546.967044039377,
+            694.6145896696382,
+            842.2621352998995,
+            1130.8459744863192,
+            1285.2047721906833,
+            1439.5635698950473,
+            1738.2142871926212,
+            1892.5730848969852,
+            2046.9318826013491,
+            2345.582599898923,
+            2499.941397603287,
+            2654.300195307651,
+            2952.950912605225,
+            3107.309710309589,
+            3261.6685080139528,
+            3560.3192253115267,
+            3714.6780230158906,
+        ],
+        "time_series": [
+            0,
+            0.1875,
+            0.7863023952095809,
+            1.3851047904191618,
+            1.9839071856287427,
+            2.5827095808383236,
+            3.1815119760479043,
+            3.780314371257485,
+            4.379116766467066,
+            4.977919161676646,
+            5.576721556886227,
+            6.175523952095808,
+            6.774326347305388,
+            7.373128742514969,
+            7.97193113772455,
+            8.570733532934131,
+            9.169535928143713,
+            9.768338323353294,
+        ],
+    }
+    time_series, damage_series = damage_calc(
+        level=7,
+        total_time=10,
+        num_clones=0,
+        num_clones_attacking=0,
+        one_talent=OneTalents.WAYOFTHEBLADE,
+        seven_talent=SevenTalents.BURNINGBLADE,
+        sixteen_talent=SixteenTalents.NONE,
+    )
+    actual = {"damage_series": damage_series, "time_series": time_series}
+    assert actual == expected
