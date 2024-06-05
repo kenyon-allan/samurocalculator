@@ -35,11 +35,13 @@ class SamuroCounters:
 
     aa_damage: float
     crit_damage: float
+    base_aa_speed: float
     aa_speed: float
     attack_cadence: float
     remaining_w_cd: int = 0  # remaining W cooldown, defaults to 10 seconds
     crit_counter: int = 0  # counter for crits - we crit every 4th attack by default and every 3rd with WOTB
     cb_counter: int = 0  # Stacks of crushing blows. We start at 1 because we began with a preloaded crit.
+    pta_count: int = 0  # Stacks of Press the Attack.
     clone: bool = (
         False  # Clones don't benefit from crushing blows, and can't trigger w, so we need to explicitly track them.
     )

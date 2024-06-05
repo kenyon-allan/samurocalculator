@@ -73,6 +73,9 @@ def apply_crit(
     if seven_talent == SevenTalents.BURNINGBLADE:
         summed_damage += bb_damage
 
+    if sixteen_talent == SixteenTalents.PRESSTHEATTACK and counters.pta_count < 4:
+        counters.pta_count += 1
+
     if w_triggered:
         print(summed_damage, "CRIT", "-W", "clone" if counters.clone else "samuro")
     else:
@@ -90,6 +93,8 @@ def apply_attack(
 
     counters.crit_counter += 1
     summed_damage += counters.aa_damage + (counters.aa_damage * 0.05 * enemy_counters.wotb_stacks)
+    if sixteen_talent == SixteenTalents.PRESSTHEATTACK and counters.pta_count < 4:
+        counters.pta_count += 1
     print(summed_damage, "AA", "clone" if counters.clone else "samuro")
     return summed_damage
 
@@ -126,6 +131,7 @@ def damage_calc(
         aa_damage=102.0 * (1.04**level),  # level 0 damage, modulated to level.
         crit_damage=102.0 * (1.04**level) * 1.5,
         crit_counter=crit_threshold,
+        base_aa_speed=1.67,
         aa_speed=1.67,
         attack_cadence=1 / 1.67,
     )
@@ -150,7 +156,7 @@ def damage_calc(
 
         # Apply our damage - either a crit or an AA
         for body in bodies:
-            if body.crit_counter == crit_threshold:
+            if body.crit_counter == crit_threshold or sixteen_talent == SixteenTalents.MERCILESS:
                 summed_damage = apply_crit(
                     summed_damage,
                     precb_aa_damage,
@@ -191,10 +197,22 @@ def damage_calc(
             passed_time += aa_reset_time
             times.append(passed_time)
 
+            # Apply PTA Stacks
+            if sixteen_talent == SixteenTalents.PRESSTHEATTACK:
+                for body in bodies:
+                    body.aa_speed = body.base_aa_speed * (1 + (0.1 * body.pta_count))
+                    body.attack_cadence = 1 / body.aa_speed
+
             if seven_talent == SevenTalents.CRUSHINGBLOWS:
                 samuro.remaining_w_cd -= 2
 
         # Increment time
         passed_time += samuro.attack_cadence
+
+        # Apply PTA Stacks
+        if sixteen_talent == SixteenTalents.PRESSTHEATTACK:
+            for body in bodies:
+                body.aa_speed = body.base_aa_speed * (1 + (0.1 * body.pta_count))
+                body.attack_cadence = 1 / body.aa_speed
 
     return times, damages
