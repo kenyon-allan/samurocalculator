@@ -110,15 +110,8 @@ def damage_calc(
         one_talent, seven_talent, sixteen_talent, level, total_time, num_clones, num_clones_attacking
     )
 
-    # # Globals
-    aa_damage = 102.0  # level 0
-    aa_speed = 1.67  # attacks per second
-    attack_cadence = 1 / aa_speed  # seconds per attack
     aa_reset_time = 3 / 16  # seconds, approximately 3 game ticks.
     crit_modifier = 1.5
-
-    # Way of Illusion
-    woi_damage_increase = 40  # full stacks
 
     # Setup our Looping Variables
     passed_time = 0  # total time passed in the simulation
@@ -129,30 +122,30 @@ def damage_calc(
 
     # Initialize our counters
     # Recalculate our AA and Crit Damage based on talents and level
-    counters = SamuroCounters(
-        aa_damage=aa_damage * (1.04**level),
-        crit_damage=aa_damage * (1.04**level) * 1.5,
+    samuro = SamuroCounters(
+        aa_damage=102.0 * (1.04**level),  # level 0 damage, modulated to level.
+        crit_damage=102.0 * (1.04**level) * 1.5,
         crit_counter=crit_threshold,
-        aa_speed=aa_speed,
-        attack_cadence=attack_cadence,
+        aa_speed=1.67,
+        attack_cadence=1 / 1.67,
     )
     enemy_counters = Enemycounters()
     if one_talent == OneTalents.WAYOFILLUSION:
-        counters.aa_damage += woi_damage_increase
-        counters.crit_damage = counters.aa_damage * crit_modifier
+        samuro.aa_damage += 40
+        samuro.crit_damage = samuro.aa_damage * crit_modifier
 
     # For CB to not calculate badly, we preserve the original damage number.
-    precb_aa_damage = counters.aa_damage
+    precb_aa_damage = samuro.aa_damage
 
     # Set up our clones
-    clones = [counters.create_clone(level) for _ in range(num_clones_attacking)]
-    bodies = clones + [counters]  # Samuro should be the last body to attack for WoTB math.
+    bodies = [samuro.create_clone(level) for _ in range(num_clones_attacking)]
+    bodies.append(samuro)  # Samuro should be the last body to attack for WoTB math.
 
     # Main Loop
     while passed_time < total_time:
 
         # Time passes
-        counters.remaining_w_cd -= counters.attack_cadence
+        samuro.remaining_w_cd -= samuro.attack_cadence
         times.append(passed_time)
 
         # Apply our damage - either a crit or an AA
@@ -173,14 +166,14 @@ def damage_calc(
         damages.append(summed_damage)
 
         if seven_talent == SevenTalents.CRUSHINGBLOWS:
-            counters.remaining_w_cd -= 2
+            samuro.remaining_w_cd -= 2
 
         # Check if we can use W before we run out of time
         if (passed_time + aa_reset_time) > total_time:
             break
 
         # Apply W if we can and AA reset attack
-        if counters.remaining_w_cd <= 0 and counters.crit_counter != crit_threshold:
+        if samuro.remaining_w_cd <= 0 and samuro.crit_counter != crit_threshold:
             for body in bodies:
                 summed_damage = apply_crit(
                     summed_damage,
@@ -199,9 +192,9 @@ def damage_calc(
             times.append(passed_time)
 
             if seven_talent == SevenTalents.CRUSHINGBLOWS:
-                counters.remaining_w_cd -= 2
+                samuro.remaining_w_cd -= 2
 
         # Increment time
-        passed_time += counters.attack_cadence
+        passed_time += samuro.attack_cadence
 
     return times, damages
