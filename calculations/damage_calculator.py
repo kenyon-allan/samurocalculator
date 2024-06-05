@@ -1,4 +1,4 @@
-from calculations.dataclasses_and_enums import Counters, OneTalents, SevenTalents
+from calculations.dataclasses_and_enums import Enemycounters, SamuroCounters, OneTalents, SevenTalents
 
 
 def raise_for_invalid_inputs(one_talent: OneTalents, seven_talent: SevenTalents, level: int, total_time: int) -> None:
@@ -18,7 +18,8 @@ def raise_for_invalid_inputs(one_talent: OneTalents, seven_talent: SevenTalents,
 def apply_crit(
     summed_damage: float,
     precb_aa_damage: float,
-    counters: Counters,
+    counters: SamuroCounters,
+    enemy_counters: Enemycounters,
     one_talent: OneTalents,
     seven_talent: SevenTalents,
     w_triggered: bool = False,
@@ -45,9 +46,9 @@ def apply_crit(
             counters.crit_damage = precb_aa_damage * (critModifier + (cbModifier * counters.cb_counter))
 
     counters.crit_counter = 0
-    summed_damage += counters.crit_damage + (counters.crit_damage * 0.05 * counters.wotb_stacks)
-    if one_talent == OneTalents.WAYOFTHEBLADE and counters.wotb_stacks < 3:
-        counters.wotb_stacks += 1
+    summed_damage += counters.crit_damage + (counters.crit_damage * 0.05 * enemy_counters.wotb_stacks)
+    if one_talent == OneTalents.WAYOFTHEBLADE and enemy_counters.wotb_stacks < 3:
+        enemy_counters.wotb_stacks += 1
     if seven_talent == SevenTalents.BURNINGBLADE:
         summed_damage += bb_damage
     if w_triggered:
@@ -87,13 +88,14 @@ def damage_calc(
 
     # Initialize our counters
     # Recalculate our AA and Crit Damage based on talents and level
-    counters = Counters(
+    counters = SamuroCounters(
         aa_damage=aa_damage * (1.04**level),
         crit_damage=aa_damage * (1.04**level) * 1.5,
         crit_counter=crit_threshold,
         aa_speed=aa_speed,
         attack_cadence=attack_cadence,
     )
+    enemy_counters = Enemycounters()
     if one_talent == OneTalents.WAYOFILLUSION:
         counters.aa_damage += woi_damage_increase
         counters.crit_damage = counters.aa_damage * crit_modifier
@@ -111,10 +113,12 @@ def damage_calc(
 
         # Apply our damage - either a crit or an AA
         if counters.crit_counter == crit_threshold:
-            summed_damage = apply_crit(summed_damage, precb_aa_damage, counters, one_talent, seven_talent)
+            summed_damage = apply_crit(
+                summed_damage, precb_aa_damage, counters, enemy_counters, one_talent, seven_talent
+            )
         else:
             counters.crit_counter += 1
-            summed_damage += counters.aa_damage + (counters.aa_damage * 0.05 * counters.wotb_stacks)
+            summed_damage += counters.aa_damage + (counters.aa_damage * 0.05 * enemy_counters.wotb_stacks)
             print(summed_damage, "AA")
         damages.append(summed_damage)
 
@@ -127,7 +131,9 @@ def damage_calc(
 
         # Apply W if we can and AA reset attack
         if counters.remaining_w_cd <= 0 and counters.crit_counter != crit_threshold:
-            summed_damage = apply_crit(summed_damage, precb_aa_damage, counters, one_talent, seven_talent, True)
+            summed_damage = apply_crit(
+                summed_damage, precb_aa_damage, counters, enemy_counters, one_talent, seven_talent, True
+            )
             damages.append(summed_damage)
 
             passed_time += aa_reset_time
