@@ -52,6 +52,7 @@ class SamuroCounters:
         clone = SamuroCounters(
             aa_damage=clone_base_damage * (1.04**level),
             crit_damage=clone_base_damage * (1.04**level) * 1.5,
+            base_aa_speed=self.aa_speed,
             aa_speed=self.aa_speed,
             attack_cadence=self.attack_cadence,
             remaining_w_cd=0,
