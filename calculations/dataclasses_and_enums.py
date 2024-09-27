@@ -17,6 +17,7 @@ class OneTalents(StrEnum):
 
     WAYOFILLUSION = "Way of Illusion"
     WAYOFTHEBLADE = "Way of the Blade"
+    WAYOFTHEWIND = "Way of the Wind"
     NONE = "None"
 
 

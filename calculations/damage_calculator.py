@@ -216,3 +216,33 @@ def damage_calc(
                 body.attack_cadence = 1 / body.aa_speed
 
     return times, damages
+
+
+def damage_calc_for_target_damage(
+    level: int,
+    target_damage: int,
+    num_clones: int = 0,
+    num_clones_attacking: int = 0,
+    one_talent: OneTalents = OneTalents.NONE,
+    seven_talent: SevenTalents = SevenTalents.NONE,
+    sixteen_talent: SixteenTalents = SixteenTalents.NONE,
+) -> tuple[list[float], list[float]]:
+    """Calculates a list of times and damage values for a given length of time"""
+
+    times, damages = damage_calc(
+        level, 1000, num_clones, num_clones_attacking, one_talent, seven_talent, sixteen_talent
+    )
+    final_times = []
+    final_damages = []
+    for time, damage in zip(times, damages):
+        if damage <= target_damage:
+            final_times.append(time)
+            final_damages.append(damage)
+            continue
+        # Go one over to guarantee kill
+        else:
+            if final_damages[len(final_damages)] < target_damage:
+                final_times.append(time)
+                final_damages.append(damage)
+            break
+    return final_times, final_damages
