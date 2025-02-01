@@ -53,12 +53,11 @@ def apply_crit(
         if w_triggered:
             counters.remaining_w_cd = base_w_cd
 
-        # Account for crushing blows' damage increase. CB applies to the auto attack that triggers it.
+        # Account for crushing blows' damage increase.
         if seven_talent == SevenTalents.CRUSHINGBLOWS:
             if counters.cb_counter < 3:
                 counters.cb_counter += 1
-                counters.aa_damage = precb_aa_damage * (1 + (cbModifier * counters.cb_counter))
-                counters.crit_damage = precb_aa_damage * (critModifier + (cbModifier * counters.cb_counter))
+                
 
         # Account for phantom pain.
         if seven_talent == SevenTalents.PHANTOMPAIN:
@@ -66,6 +65,12 @@ def apply_crit(
 
     counters.crit_counter = 0
     summed_damage += counters.crit_damage + (counters.crit_damage * 0.05 * enemy_counters.wotb_stacks)
+    
+    # CB no longer applies to the auto attack that triggers it.
+    if not counters.clone and seven_talent == SevenTalents.CRUSHINGBLOWS:
+        counters.aa_damage = precb_aa_damage * (1 + (cbModifier * counters.cb_counter))
+        counters.crit_damage = precb_aa_damage * (critModifier + (cbModifier * counters.cb_counter))
+
     if one_talent == OneTalents.WAYOFTHEBLADE and enemy_counters.wotb_stacks < 3:
         enemy_counters.wotb_stacks += 1
 
@@ -230,7 +235,7 @@ def damage_calc_for_target_damage(
     """Calculates a list of times and damage values for a given length of time"""
 
     times, damages = damage_calc(
-        level, 1000, num_clones, num_clones_attacking, one_talent, seven_talent, sixteen_talent
+        level, 10000, num_clones, num_clones_attacking, one_talent, seven_talent, sixteen_talent
     )
     final_times = []
     final_damages = []
@@ -241,7 +246,7 @@ def damage_calc_for_target_damage(
             continue
         # Go one over to guarantee kill
         else:
-            if final_damages[len(final_damages)] < target_damage:
+            if final_damages[len(final_damages) - 1] < target_damage:
                 final_times.append(time)
                 final_damages.append(damage)
             break
