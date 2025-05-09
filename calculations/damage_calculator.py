@@ -1,4 +1,23 @@
 from calculations.dataclasses_and_enums import Enemycounters, SamuroCounters, OneTalents, SevenTalents, SixteenTalents
+from calculations.global_values import (
+    AA_RESET_TIME,
+    BASE_W_CD,
+    BURNING_BLADE_MODIFIER,
+    CRIT_MULTIPLIER,
+    CRUSHING_BLOWS_MAX_STACKS,
+    CRUSHING_BLOWS_MODIFIER,
+    DEFAULT_LEVEL_SCALING,
+    MAXIMUM_CLONE_COUNT,
+    MAXIMUM_LEVEL,
+    PTA_MAX_STACKS,
+    PTA_STACK_SCALING,
+    SAM_BASE_AA_SPEED,
+    SAM_BASE_ATTACK_CADENCE,
+    SAM_BASE_DAMAGE_0,
+    WAY_OF_ILLUSION_DAMAGE_BONUS,
+    WOTB_ARMOR_REDUCTION,
+    WOTB_MAX_STACKS,
+)
 
 
 def raise_for_invalid_inputs(
@@ -13,7 +32,7 @@ def raise_for_invalid_inputs(
     """Raises for invalid inputs."""
     if total_time < 0:
         raise ValueError("total_time must be a non-negative number")
-    if level < 0 or level > 30:
+    if level < 0 or level > MAXIMUM_LEVEL:
         raise ValueError("level must be a valid hots level between 0 and 30.")
     if (one_talent != OneTalents.NONE) and level == 0:
         raise ValueError("Cannot have Way of Illusion or Way of the Blade active at level 0.")
@@ -21,7 +40,7 @@ def raise_for_invalid_inputs(
         raise ValueError("Cannot have a level 7 talent without being at least level 7.")
     if (sixteen_talent != SixteenTalents.NONE) and level < 16:
         raise ValueError("Cannot have a level 16 talent without being at least level 16.")
-    if num_clones < 0 or num_clones > 2:
+    if num_clones < 0 or num_clones > MAXIMUM_CLONE_COUNT:
         raise ValueError("Invalid number of clones. Must be 0, 1, or 2")
     if num_clones_attacking > num_clones:
         raise ValueError("Cannot have more clones attacking than you have clones.")
@@ -39,46 +58,39 @@ def apply_crit(
     w_triggered: bool = False,
 ) -> float:
     """Applies a critical strike and returns the result."""
-    # Critical Strike
-    critModifier = 1.5
-    base_w_cd = 10
-
-    # Crushing Blows
-    cbModifier = 0.1
 
     # Burning Blade
-    bb_damage = 0.5 * counters.aa_damage
+    bb_damage = BURNING_BLADE_MODIFIER * counters.aa_damage
 
     if not counters.clone:
         if w_triggered:
-            counters.remaining_w_cd = base_w_cd
+            counters.remaining_w_cd = BASE_W_CD
 
         # Account for crushing blows' damage increase.
         if seven_talent == SevenTalents.CRUSHINGBLOWS:
-            if counters.cb_counter < 3:
+            if counters.cb_counter < CRUSHING_BLOWS_MAX_STACKS:
                 counters.cb_counter += 1
-                
 
         # Account for phantom pain.
         if seven_talent == SevenTalents.PHANTOMPAIN:
-            counters.crit_damage = counters.aa_damage * (critModifier + (0.35 * num_clones))
+            counters.crit_damage = counters.aa_damage * (CRIT_MULTIPLIER + (0.35 * num_clones))
 
     counters.crit_counter = 0
     summed_damage += counters.crit_damage + (counters.crit_damage * 0.05 * enemy_counters.wotb_stacks)
-    
+
     # CB no longer applies to the auto attack that triggers it.
     if not counters.clone and seven_talent == SevenTalents.CRUSHINGBLOWS:
-        counters.aa_damage = precb_aa_damage * (1 + (cbModifier * counters.cb_counter))
-        counters.crit_damage = precb_aa_damage * (critModifier + (cbModifier * counters.cb_counter))
+        counters.aa_damage = precb_aa_damage * (1 + (CRUSHING_BLOWS_MODIFIER * counters.cb_counter))
+        counters.crit_damage = precb_aa_damage * (CRIT_MULTIPLIER + (CRUSHING_BLOWS_MODIFIER * counters.cb_counter))
 
-    if one_talent == OneTalents.WAYOFTHEBLADE and enemy_counters.wotb_stacks < 3:
+    if one_talent == OneTalents.WAYOFTHEBLADE and enemy_counters.wotb_stacks < WOTB_MAX_STACKS:
         enemy_counters.wotb_stacks += 1
 
     # Burning blade is a separate damage instance as to not benefit from wotb (physical vs spell)
     if seven_talent == SevenTalents.BURNINGBLADE:
         summed_damage += bb_damage
 
-    if sixteen_talent == SixteenTalents.PRESSTHEATTACK and counters.pta_count < 4:
+    if sixteen_talent == SixteenTalents.PRESSTHEATTACK and counters.pta_count < PTA_MAX_STACKS:
         counters.pta_count += 1
 
     if w_triggered:
@@ -97,8 +109,8 @@ def apply_attack(
     """Applies a normal attack and returns the result."""
 
     counters.crit_counter += 1
-    summed_damage += counters.aa_damage + (counters.aa_damage * 0.05 * enemy_counters.wotb_stacks)
-    if sixteen_talent == SixteenTalents.PRESSTHEATTACK and counters.pta_count < 4:
+    summed_damage += counters.aa_damage + (counters.aa_damage * WOTB_ARMOR_REDUCTION * enemy_counters.wotb_stacks)
+    if sixteen_talent == SixteenTalents.PRESSTHEATTACK and counters.pta_count < PTA_MAX_STACKS:
         counters.pta_count += 1
     print(summed_damage, "AA", "clone" if counters.clone else "samuro")
     return summed_damage
@@ -120,9 +132,6 @@ def damage_calc(
         one_talent, seven_talent, sixteen_talent, level, total_time, num_clones, num_clones_attacking
     )
 
-    aa_reset_time = 3 / 16  # seconds, approximately 3 game ticks.
-    crit_modifier = 1.5
-
     # Setup our Looping Variables
     passed_time = 0  # total time passed in the simulation
     summed_damage = 0  # total damage dealt
@@ -133,17 +142,17 @@ def damage_calc(
     # Initialize our counters
     # Recalculate our AA and Crit Damage based on talents and level
     samuro = SamuroCounters(
-        aa_damage=102.0 * (1.04**level),  # level 0 damage, modulated to level.
-        crit_damage=102.0 * (1.04**level) * 1.5,
+        aa_damage=SAM_BASE_DAMAGE_0 * (DEFAULT_LEVEL_SCALING**level),  # level 0 damage, modulated to level.
+        crit_damage=SAM_BASE_DAMAGE_0 * (DEFAULT_LEVEL_SCALING**level) * CRIT_MULTIPLIER,
         crit_counter=crit_threshold,
-        base_aa_speed=1.67,
-        aa_speed=1.67,
-        attack_cadence=1 / 1.67,
+        base_aa_speed=SAM_BASE_AA_SPEED,
+        aa_speed=SAM_BASE_AA_SPEED,
+        attack_cadence=SAM_BASE_ATTACK_CADENCE,
     )
     enemy_counters = Enemycounters()
     if one_talent == OneTalents.WAYOFILLUSION:
-        samuro.aa_damage += 40
-        samuro.crit_damage = samuro.aa_damage * crit_modifier
+        samuro.aa_damage += WAY_OF_ILLUSION_DAMAGE_BONUS
+        samuro.crit_damage = samuro.aa_damage * CRIT_MULTIPLIER
 
     # For CB to not calculate badly, we preserve the original damage number.
     precb_aa_damage = samuro.aa_damage
@@ -180,7 +189,7 @@ def damage_calc(
             samuro.remaining_w_cd -= 2
 
         # Check if we can use W before we run out of time
-        if (passed_time + aa_reset_time) > total_time:
+        if (passed_time + AA_RESET_TIME) > total_time:
             break
 
         # Apply W if we can and AA reset attack
@@ -199,13 +208,13 @@ def damage_calc(
                 )
             damages.append(summed_damage)
 
-            passed_time += aa_reset_time
+            passed_time += AA_RESET_TIME
             times.append(passed_time)
 
             # Apply PTA Stacks
             if sixteen_talent == SixteenTalents.PRESSTHEATTACK:
                 for body in bodies:
-                    body.aa_speed = body.base_aa_speed * (1 + (0.1 * body.pta_count))
+                    body.aa_speed = body.base_aa_speed * (1 + (PTA_STACK_SCALING * body.pta_count))
                     body.attack_cadence = 1 / body.aa_speed
 
             if seven_talent == SevenTalents.CRUSHINGBLOWS:
@@ -217,7 +226,7 @@ def damage_calc(
         # Apply PTA Stacks
         if sixteen_talent == SixteenTalents.PRESSTHEATTACK:
             for body in bodies:
-                body.aa_speed = body.base_aa_speed * (1 + (0.1 * body.pta_count))
+                body.aa_speed = body.base_aa_speed * (1 + (PTA_STACK_SCALING * body.pta_count))
                 body.attack_cadence = 1 / body.aa_speed
 
     return times, damages
