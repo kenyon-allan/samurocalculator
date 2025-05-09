@@ -14,11 +14,13 @@ AA_RESET_TIME = 3 / 16  # Seconds, approximately 3 game ticks where 1 tick is 1/
 WAY_OF_ILLUSION_DAMAGE_BONUS = 40  # Assuming quest complete.
 PTA_STACK_SCALING = 0.1  # Each stack of press the attack increases attack speed by 10% up to 40%
 WOTB_ARMOR_REDUCTION = 0.05  # Each stack of way of the blade reduces enemy armor by 5, up to 15.
+CRUSHING_BLOWS_W_REDUCTION = 2  # Each hit with crushing blows reduces W's cd by 2 seconds.
 
 # Samuro Level 0 Constants
 SAM_BASE_DAMAGE_0 = 102.0
 SAM_BASE_AA_SPEED = 1.67
 SAM_BASE_ATTACK_CADENCE = 1 / SAM_BASE_AA_SPEED
+CLONE_BASE_DAMAGE = 11  # clones really suck.
 
 # Samuro Constraints
 WOTB_MAX_STACKS = 3

@@ -6,6 +6,7 @@ from calculations.global_values import (
     CRIT_MULTIPLIER,
     CRUSHING_BLOWS_MAX_STACKS,
     CRUSHING_BLOWS_MODIFIER,
+    CRUSHING_BLOWS_W_REDUCTION,
     DEFAULT_LEVEL_SCALING,
     MAXIMUM_CLONE_COUNT,
     MAXIMUM_LEVEL,
@@ -141,14 +142,7 @@ def damage_calc(
 
     # Initialize our counters
     # Recalculate our AA and Crit Damage based on talents and level
-    samuro = SamuroCounters(
-        aa_damage=SAM_BASE_DAMAGE_0 * (DEFAULT_LEVEL_SCALING**level),  # level 0 damage, modulated to level.
-        crit_damage=SAM_BASE_DAMAGE_0 * (DEFAULT_LEVEL_SCALING**level) * CRIT_MULTIPLIER,
-        crit_counter=crit_threshold,
-        base_aa_speed=SAM_BASE_AA_SPEED,
-        aa_speed=SAM_BASE_AA_SPEED,
-        attack_cadence=SAM_BASE_ATTACK_CADENCE,
-    )
+    samuro = SamuroCounters.basic_initialize(level, crit_threshold)
     enemy_counters = Enemycounters()
     if one_talent == OneTalents.WAYOFILLUSION:
         samuro.aa_damage += WAY_OF_ILLUSION_DAMAGE_BONUS
@@ -186,7 +180,7 @@ def damage_calc(
         damages.append(summed_damage)
 
         if seven_talent == SevenTalents.CRUSHINGBLOWS:
-            samuro.remaining_w_cd -= 2
+            samuro.remaining_w_cd -= CRUSHING_BLOWS_W_REDUCTION
 
         # Check if we can use W before we run out of time
         if (passed_time + AA_RESET_TIME) > total_time:
@@ -218,7 +212,7 @@ def damage_calc(
                     body.attack_cadence = 1 / body.aa_speed
 
             if seven_talent == SevenTalents.CRUSHINGBLOWS:
-                samuro.remaining_w_cd -= 2
+                samuro.remaining_w_cd -= CRUSHING_BLOWS_W_REDUCTION
 
         # Increment time
         passed_time += samuro.attack_cadence

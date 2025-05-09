@@ -2,6 +2,15 @@ from enum import StrEnum
 from dataclasses import dataclass
 from typing import Self
 
+from calculations.global_values import (
+    CLONE_BASE_DAMAGE,
+    CRIT_MULTIPLIER,
+    DEFAULT_LEVEL_SCALING,
+    SAM_BASE_AA_SPEED,
+    SAM_BASE_ATTACK_CADENCE,
+    SAM_BASE_DAMAGE_0,
+)
+
 
 class SevenTalents(StrEnum):
     """Level 7 talent options."""
@@ -47,12 +56,23 @@ class SamuroCounters:
         False  # Clones don't benefit from crushing blows, and can't trigger w, so we need to explicitly track them.
     )
 
+    @staticmethod
+    def basic_initialize(level: int, crit_threshold: int) -> "SamuroCounters":
+        """Performs a basic initialization for default values."""
+        return SamuroCounters(
+            aa_damage=SAM_BASE_DAMAGE_0 * (DEFAULT_LEVEL_SCALING**level),
+            crit_damage=SAM_BASE_DAMAGE_0 * (DEFAULT_LEVEL_SCALING**level) * CRIT_MULTIPLIER,
+            crit_counter=crit_threshold,  # We assume we start with a crit loaded for optimal damage.
+            base_aa_speed=SAM_BASE_AA_SPEED,
+            aa_speed=SAM_BASE_AA_SPEED,
+            attack_cadence=SAM_BASE_ATTACK_CADENCE,
+        )
+
     def create_clone(self: Self, level: int) -> "SamuroCounters":
         """Simulates a clone of Samuro which has fractions of his damage, but maintain crit stacks."""
-        clone_base_damage = 11  # clones suck wow.
         clone = SamuroCounters(
-            aa_damage=clone_base_damage * (1.04**level),
-            crit_damage=clone_base_damage * (1.04**level) * 1.5,
+            aa_damage=CLONE_BASE_DAMAGE * (DEFAULT_LEVEL_SCALING**level),
+            crit_damage=CLONE_BASE_DAMAGE * (DEFAULT_LEVEL_SCALING**level) * CRIT_MULTIPLIER,
             base_aa_speed=self.aa_speed,
             aa_speed=self.aa_speed,
             attack_cadence=self.attack_cadence,
